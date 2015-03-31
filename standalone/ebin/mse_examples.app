@@ -4,6 +4,7 @@
              simple_sup, supervised_actor2, simple_supervisor_main,
              simple_supervisor_conf, supervised_actor1, warehouse, dealer,
              warehouse_main, warehouse_conf, customer, actorB, actorC, actorA,
-             delayed_test_main, delayed_test_conf, actor_logger]},
+             delayed_test_main, delayed_test_conf, actor_logger, two_buyer_dist,
+             dist_buyer1, dist_buyer2, dist_seller]},
   {registered, []}
 ]}.
