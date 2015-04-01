@@ -18,6 +18,10 @@ ssactor_join(_, _, _, State) -> {accept, State}.
 ssactor_conversation_established(_, _, _, _, State) -> {ok, State}.
 ssactor_conversation_error(_, _, _, State) -> {ok, State}.
 
+ssactor_conversation_ended(CID, _Reason, State) ->
+  actor_logger:info(buyer2, "Conversation ~p ended.~n", [CID]),
+  {ok, State}.
+
 ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "quote", [QuoteInt], _State, _Monitor) ->
   actor_logger:info(buyer2, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
   no_state;
