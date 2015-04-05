@@ -17,15 +17,6 @@ ssactor_init(_Args, Monitor) ->
   conversation:start_conversation(Monitor, "TwoBuyers", "A"),
   no_state.
 
-% case ConvStartRes of
-%   {ok, ConvKey} ->
-%     io:format("ConvKey in ssactor_init: ~p~n", [ConvKey]),
-%     conversation:send(ConvKey, ["S"], "title", ["String"], ["To Kill a Mockingbird"]);
-%   Err ->
-%     error_logger:error_msg("Error starting conversation for protocol ~s (invite): ~p~n",
-%                          ["TwoBuyers", Err])
-% end,
-% no_state. % We don't need no state round these parts
 
 ssactor_join(_, _, _, State) -> {accept, State}.
 
@@ -37,7 +28,7 @@ ssactor_conversation_established(PN, RN, _CID, ConvKey, State) ->
   {ok, State}.
 
 ssactor_conversation_error(_PN, _RN, Error, State) ->
-  actor_logger:error(buyer1, "Could not establish conversation: ~p~n", [Error]),
+  actor_logger:err(buyer1, "Could not establish conversation: ~p~n", [Error]),
   {ok, State}.
 
 
