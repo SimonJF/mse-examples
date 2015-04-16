@@ -2,7 +2,7 @@
 -behaviour(buyer2).
 -compile(export_all).
 -define(PRICE_THRESHOLD, 50).
-
+-define(BUYER2, dist_buyer2).
 % Buyer 2:
 %   Server -> Buyer 2 (quote(Int))
 %   Buyer 1 -> Buyer 2 (share(Int))
@@ -41,4 +41,11 @@ ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "date", [DeliveryDate
 ssactor_handle_message("TwoBuyers", "B", _CID, _SenderRole, Op, Payload, _State, _Monitor) ->
   actor_logger:err(buyer2, "Unhandled message: (~s, ~w)", [Op, Payload]),
   no_state.
+
+
+%%%%% API
+%%%
+
+start_link() ->
+  ssa_gen_server:start_link({local, ?BUYER2}, dist_buyer2, [], []).
 

@@ -1,6 +1,8 @@
 -module(dist_buyer1).
 -behaviour(ssa_gen_server).
 -compile(export_all).
+-define(BUYER1, buyer1).
+
 
 % Buyer 1:
 %   Buyer 1 -> Server (title(String))
@@ -47,5 +49,12 @@ ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quit", _, _State, _Moni
 ssactor_handle_message("TwoBuyers", "A", _CID, _SenderRole, Op, Payload, _State, _Monitor) ->
   actor_logger:err(buyer1, "Unhandled message: (~s,  ~w)", [Op, Payload]),
   no_state.
+
+%%%%%%%% API Functions
+%%% Worth noting that a common pattern in Erlang is to register a PID
+%%% to a name, and then invoke a function by sending a message to that
+%%% name.
+start_link() ->
+  ssa_gen_server:start_link({local, ?BUYER1}, dist_buyer1, [], []).
 
 terminate(_, _) -> ok.
