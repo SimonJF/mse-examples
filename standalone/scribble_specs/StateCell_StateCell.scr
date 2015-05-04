@@ -1,0 +1,17 @@
+module src.com.simonjf.scribbletest.PersistentStateCell_StateCell;
+
+type <erlang> "string" from "" as String;
+type <erlang> "atom" from "" as Atom;
+
+local protocol StateCell at StateCell(role Client,role StateCell) {
+	rec loop {
+		choice at Client {
+			receive_call_request put(String) from Client;
+			send_call_response put(Atom) to Client;
+		} or {
+			receive_call_request get() from Client;
+			send_call_response get(String) to Client;
+		}
+		continue loop;
+	}
+}

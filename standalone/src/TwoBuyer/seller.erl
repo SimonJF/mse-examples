@@ -13,7 +13,7 @@
 %   B -> seller (retry())
 %   B -> seller (quit())
 
-ssactor_init(_Args, _Monitor) -> no_state. % We don't need no state round these parts
+ssactor_init(_Args, _Monitor) -> {ok, no_state}. % We don't need no state round these parts
 
 ssactor_join(_, _, _, State) -> {accept, State}.
 
@@ -27,19 +27,19 @@ ssactor_conversation_ended(CID, _Reason, State) ->
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _State, ConvKey) ->
   actor_logger:info(seller, "Received title ~s from ~s", [Title, SenderRole]),
   conversation:send(ConvKey, ["A", "B"], "quote", ["Integer"], [?PRICE]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "accept", [Address], _State, ConvKey) ->
   actor_logger:info(seller, "~s accepted quote; received address ~s", [SenderRole, Address]),
   conversation:send(ConvKey, ["B"], "date", ["String"], [?DELIVERY_DATE]),
   conversation:end_conversation(ConvKey, normal),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "retry", _, _State, _ConvKey) ->
   actor_logger:info(seller, "~s wants to retry", ["TwoBuyers", SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "quit", _, _State, _ConvKey) ->
   actor_logger:info(seller, "~s wants to quit", ["TwoBuyers", SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, _SenderRole, Op, Payload, _State, _ConvKey) ->
   actor_logger:err(seller, "Unhandled message: (~s, ~w)", [Op, Payload]),
-  no_state.
+  {ok, no_state}.
 

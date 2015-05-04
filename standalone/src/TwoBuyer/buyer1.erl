@@ -39,18 +39,18 @@ ssactor_conversation_ended(CID, _Reason, State) ->
 ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quote", [QuoteInt], _State, Monitor) ->
   actor_logger:info(buyer1, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
   conversation:send(Monitor, ["B"], "share", ["Integer"], [QuoteInt div 2]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "accept", [Address], _State, _Monitor) ->
   actor_logger:info(buyer1, "~s accepted quote; received address (~p)", [SenderRole, Address]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "retry", _, _State, _Monitor) ->
   actor_logger:info(buyer1, "~s wants to retry", [SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quit", _, _State, _Monitor) ->
   actor_logger:info(buyer1, "~s wants to quit", [SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "A", _CID, _SenderRole, Op, Payload, _State, _Monitor) ->
   actor_logger:err(buyer1, "Unhandled message: (~s,  ~w)", [Op, Payload]),
-  no_state.
+  {ok, no_state}.
 
 terminate(_, _) -> ok.
