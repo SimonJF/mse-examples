@@ -1,0 +1,21 @@
+module src.com.simonjf.ScribbleExamples.PersistentStateCell.PersistentStateCell;
+
+type <erlang> "string" from "" as String;
+type <erlang> "atom" from "" as Atom;
+
+global protocol PersistentStateCell(role Client, role StateCell, role Database) {
+	rec loop {
+		choice at Client {
+			put_request(String) from Client to StateCell;
+			store_request(String) from StateCell to Database;
+			store_response(Atom) from Database to StateCell;
+			put_response(Atom) from StateCell to Client;
+		} or {
+			get_request() from Client to StateCell;
+			select_request() from StateCell to Database;
+			select_response(String) from Database to StateCell;
+			get_response(String) from StateCell to Client;
+		}
+		continue loop;
+	}
+}

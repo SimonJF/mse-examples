@@ -1,0 +1,17 @@
+module src.com.simonjf.ScribbleExamples.StateCell.StateCell;
+
+type <erlang> "string" from "" as String;
+type <erlang> "atom" from "" as Atom;
+
+global protocol ProtocolName(role Client, role StateCell) {
+	rec loop {
+		choice at Client {
+			put_request(String) from Client to StateCell;
+			put_response(Atom) from StateCell to Client;
+		} or {
+			get_request() from Client to StateCell;
+			get_response(String) from StateCell to Client;
+		}
+		continue loop;
+	}
+}

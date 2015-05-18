@@ -1,0 +1,17 @@
+module src.com.simonjf.ScribbleExamples.SynchronousPersistentStateCell.SynchronousPersistentStateCell_Database;
+
+type <erlang> "string" from "" as String;
+type <erlang> "atom" from "" as Atom;
+
+local protocol PersistentStateCell at Database(role Client,role StateCell,role Database) {
+	rec loop {
+		choice at Client {
+			receive_call_request store() from StateCell;
+			send_call_response store(Atom) to StateCell;
+		} or {
+			receive_call_request select() from StateCell;
+			send_call_response select(Atom) to StateCell;
+		}
+		continue loop;
+	}
+}
