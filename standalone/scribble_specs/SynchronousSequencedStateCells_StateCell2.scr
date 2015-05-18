@@ -1,0 +1,9 @@
+module src.com.simonjf.ScribbleExamples.SynchronousSequencedStateCells.SynchronousSequencedStateCells_StateCell2;
+
+type <erlang> "integer" from "" as Integer;
+type <erlang> "atom" from "" as Atom;
+
+local protocol SynchronousSequencedStateCells at StateCell2(role Client,role StateCell1,role StateCell2,role StateCellRes) {
+	receive_call_request get() from Client;
+	send_call_response get(String) to Client;
+}
