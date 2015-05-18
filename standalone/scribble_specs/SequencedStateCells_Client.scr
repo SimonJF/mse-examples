@@ -1,0 +1,13 @@
+module src.com.simonjf.ScribbleExamples.SequencedStateCells.SequencedStateCells_Client;
+
+type <erlang> "integer" from "" as Integer;
+type <erlang> "atom" from "" as Atom;
+
+local protocol SequencedStateCells at Client(role Client,role StateCell1,role StateCell2,role StateCellRes) {
+	get_request() to StateCell1;
+	get_response(Integer) from StateCell1;
+	get_request() to StateCell2;
+	get_response(Integer) from StateCell2;
+	put_request(Integer) to StateCellRes;
+	put_response(Atom) from StateCellRes;
+}
