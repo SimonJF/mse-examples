@@ -1,5 +1,5 @@
--compile(export_all).
 -module(two_buyer_dist).
+-compile(export_all).
 -behaviour(application).
 
 start(normal, _Args) ->

@@ -24,20 +24,20 @@ ssactor_conversation_error(_, _, _, State) -> {ok, State}.
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _State, ConvKey) ->
   actor_logger:info(seller, "Received title ~s from ~s", [Title, SenderRole]),
   conversation:send(ConvKey, ["A", "B"], "quote", ["Integer"], [?PRICE]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "accept", [Address], _State, ConvKey) ->
   actor_logger:info(seller, "~s accepted quote; received address ~s", [SenderRole, Address]),
   conversation:send(ConvKey, ["B"], "date", ["String"], [?DELIVERY_DATE]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "retry", _, _State, _ConvKey) ->
   actor_logger:info(seller, "~s wants to retry", ["TwoBuyers", SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "quit", _, _State, _ConvKey) ->
   actor_logger:info(seller, "~s wants to quit", ["TwoBuyers", SenderRole]),
-  no_state;
+  {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, _SenderRole, Op, Payload, _State, _ConvKey) ->
   actor_logger:err(seller, "Unhandled message: (~s, ~w)", [Op, Payload]),
-  no_state.
+  {ok, no_state}.
 
 
 start_link() ->
