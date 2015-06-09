@@ -21,6 +21,10 @@ ssactor_join(_, _, _, State) -> {accept, State}.
 ssactor_conversation_established(_, _, _, _, State) -> {ok, State}.
 ssactor_conversation_error(_, _, _, State) -> {ok, State}.
 
+ssactor_conversation_ended(CID, Reason, State) ->
+  actor_logger:info(client, "Conversation ~p ended: ~p.~n", [CID, Reason]),
+  {ok, State}.
+
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _State, ConvKey) ->
   actor_logger:info(seller, "Received title ~s from ~s", [Title, SenderRole]),
   conversation:send(ConvKey, ["A", "B"], "quote", ["Integer"], [?PRICE]),

@@ -18,6 +18,11 @@ ssactor_join(_, _, _, State) -> {accept, State}.
 ssactor_conversation_established(_, _, _, _, State) -> {ok, State}.
 ssactor_conversation_error(_, _, _, State) -> {ok, State}.
 
+ssactor_conversation_ended(CID, Reason, State) ->
+  actor_logger:info(client, "Conversation ~p ended: ~p.~n", [CID, Reason]),
+  {ok, State}.
+
+
 ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "quote", [QuoteInt], _State, _Monitor) ->
   actor_logger:info(buyer2, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
   {ok, no_state};
@@ -43,6 +48,8 @@ ssactor_handle_message("TwoBuyers", "B", _CID, _SenderRole, Op, Payload, _State,
   actor_logger:err(buyer2, "Unhandled message: (~s, ~w)", [Op, Payload]),
   {ok, no_state}.
 
+terminate(_, _) ->
+  error_logger:error_msg("Buyer 2 terminated~n").
 
 %%%%% API
 %%%

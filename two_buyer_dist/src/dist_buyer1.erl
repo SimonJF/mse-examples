@@ -33,6 +33,10 @@ ssactor_conversation_error(_PN, _RN, Error, State) ->
   {ok, State}.
 
 
+ssactor_conversation_ended(CID, Reason, State) ->
+  actor_logger:info(client, "Conversation ~p ended: ~p.~n", [CID, Reason]),
+  {ok, State}.
+
 ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quote", [QuoteInt], _State, Monitor) ->
   actor_logger:info(buyer1, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
   conversation:send(Monitor, ["B"], "share", ["Integer"], [QuoteInt div 2]),
