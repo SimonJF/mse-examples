@@ -54,7 +54,8 @@ ssactor_handle_message("TwoBuyers", "A", _CID, _SenderRole, Op, Payload, State, 
 
 handle_cast(start_conversation, Monitor) ->
   io:format("Starting conversation in buyer1.~n", []),
-  conversation:start_conversation(Monitor, "TwoBuyers", "A").
+  conversation:start_conversation(Monitor, "TwoBuyers", "A"),
+  {noreply, Monitor}.
 
 
 start_new_conversation(PID) ->
