@@ -1,0 +1,30 @@
+module src.com.simonjf.ScribbleExamples.TravelBooking.TravelBooking_HotelBookingService;
+
+type <erlang> "atom" from "" as RequestInfo;
+type <erlang> "atom" from "" as FlightDetails;
+type <erlang> "atom" from "" as HotelDetails;
+type <erlang> "int" from "" as BookingID;
+type <erlang> "int" from "" as CCNumber;
+type <erlang> "string" from "" as ExpiryDate;
+type <erlang> "int" from "" as CVC;
+type <erlang> "int" from "" as FlightID;
+type <erlang> "int" from "" as HotelID;
+type <erlang> "float" from "" as Money;
+
+local protocol BookTravel at HotelBookingService(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService,role PaymentProcessor) {
+	rec bookingLoop {
+		par {
+		} and {
+			hotelInfoRequest(RequestInfo) from TravelAgent;
+			hotelInfoResponse(HotelDetails) to TravelAgent;
+		}
+		choice at Customer {
+			continue bookingLoop;
+		}
+	}
+	par {
+	} and {
+		bookHotel(HotelID) from TravelAgent;
+		hotelBookingConfirmation() to TravelAgent;
+	}
+}

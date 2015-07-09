@@ -1,0 +1,17 @@
+module src.com.simonjf.ScribbleExamples.TravelBooking.TravelBooking_PaymentProcessor;
+
+type <erlang> "atom" from "" as RequestInfo;
+type <erlang> "atom" from "" as FlightDetails;
+type <erlang> "atom" from "" as HotelDetails;
+type <erlang> "int" from "" as BookingID;
+type <erlang> "int" from "" as CCNumber;
+type <erlang> "string" from "" as ExpiryDate;
+type <erlang> "int" from "" as CVC;
+type <erlang> "int" from "" as FlightID;
+type <erlang> "int" from "" as HotelID;
+type <erlang> "float" from "" as Money;
+
+local protocol BookTravel at PaymentProcessor(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService,role PaymentProcessor) {
+	processPayment(CCNumber,ExpiryDate,CVC,Money) from TravelAgent;
+	paymentConfirmation() to TravelAgent;
+}
