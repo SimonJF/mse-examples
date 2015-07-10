@@ -4,10 +4,23 @@
                                     departure_date,
                                     return_date }).
 
--record(customer_booking_response, { flights,
-                                     hotels } ).
-
 -record(flight_details, { flight_id,
                           airline,
-                          departure_date_time,
-                          arrival_date_time } ).
+                          origin_airport,
+                          destination_airport,
+                          departure_date,
+                          arrival_date,
+                          departure_time_ust,
+                          arrival_time_ust,
+                          price
+                        } ).
+
+-record(hotel_details,  { hotel_name,
+                          check_in_date,
+                          check_out_date,
+                          price
+                        } ).
+
+-record(flight_package, { package_id,
+                          outward_flight,
+                          return_flight} ).

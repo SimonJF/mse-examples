@@ -1,4 +1,4 @@
--module(travel_agent).
+-module(customer).
 -behaviour(ssa_gen_server).
 -compile(export_all).
 -include("request_records.hrl").
@@ -12,48 +12,70 @@ ssactor_init(_Args, Monitor) ->
 
 fresh_customer_request(CustomerName, Origin, Destination, DepartureDate,
                        ReturnDate) ->
-  #customer_request{name=CustomerName, origin=Origin, destination=Destination,
-                    departure_date=DepartureDate, return_date=ReturnDate}.
+  #customer_booking_request{name=CustomerName, origin=Origin, destination=Destination,
+                            departure_date=DepartureDate, return_date=ReturnDate}.
 
 ssactor_join(_, _, _, State) -> {accept, State}.
 
 ssactor_conversation_established(PN, RN, _CID, ConvKey, State) ->
   if PN == "BookTravel" andalso RN == "Customer" ->
       % TODO: Make this more interactive or something
-      CustomerRequest = fresh_customer_request("Simon Fowler", "Edinburgh",
-                                               "Budapest", "22/8/2015",
-                                               "29/8/15"),
-      conversation:send(ConvKey, ["TravelAgent"], "customerRequest", [],
-                        [CustomerRequest]);
+      CustomerRequest = fresh_customer_request("Simon Fowler", "GLA",
+                                               "BUD", "22/8/2015",
+                                               "29/8/2015"),
+      travel_agent:booking_request(ConvKey, CustomerRequest);
      true -> ok
   end,
   {ok, State}.
 
 ssactor_conversation_error(_PN, _RN, Error, State) ->
-  actor_logger:err(buyer1, "Could not establish conversation: ~p~n", [Error]),
+  actor_logger:err(customer, "Could not establish conversation: ~p~n", [Error]),
   {ok, State}.
 
 
 ssactor_conversation_ended(CID, _Reason, State) ->
-  actor_logger:info(buyer1, "Conversation ~p ended.~n", [CID]),
+  actor_logger:info(customer, "Conversation ~p ended.~n", [CID]),
   {ok, State}.
 
-ssactor_handle_message("BookTravel", "Customer", _, SenderRole, "customerResponse",
-                       [CustomerResponse], _State, ConvKey) ->
-  actor_logger:info(buyer1, "Response from travel agent:", [QuoteInt, SenderRole]),
-  conversation:send(ConvKey, ["B"], "share", ["Integer"], [QuoteInt div 2]),
-  {ok, no_state};
-ssactor_handle_message("BookTravel", "Customer", _, SenderRole, "accept", [Address], _State, _ConvKey) ->
-  actor_logger:info(buyer1, "~s accepted quote; received address (~p)", [SenderRole, Address]),
-  {ok, no_state};
-ssactor_handle_message("BookTravel", "Customer", _, SenderRole, "retry", _, _State, _ConvKey) ->
-  actor_logger:info(buyer1, "~s wants to retry", [SenderRole]),
-  {ok, no_state};
-ssactor_handle_message("BookTravel", "Customer", _, SenderRole, "quit", _, _State, _ConvKey) ->
-  actor_logger:info(buyer1, "~s wants to quit", [SenderRole]),
-  {ok, no_state};
-ssactor_handle_message("BookTravel", "Customer", _CID, _SenderRole, Op, Payload, _State, _ConvKey) ->
-  actor_logger:err(buyer1, "Unhandled message: (~s,  ~w)", [Op, Payload]),
-  {ok, no_state}.
+ssactor_handle_message("BookTravel", "Customer", _, _SenderRole, "customerResponse",
+                       [FlightDetailList, HotelDetailList], State, ConvKey) ->
+  actor_logger:info(customer, "Response from travel agent:~n Flights: ~p~nHotels: ~p~n",
+                    [FlightDetailList, HotelDetailList]),
+  % Check whether we have at least one of each flight & hotel booking,
+  % choose the first if we do.
+  case {FlightDetailList, HotelDetailList} of
+    {[Flight|_], [Hotel|_]} ->
+      FlightID = Flight#flight_details.flight_id,
+      travel_agent:booking_proceed(ConvKey, FlightID, Hotel);
+    _ ->
+      % If not, send the cancelBooking message, and kill the session.
+      travel_agent:booking_cancel(ConvKey),
+      conversation:end_conversation(ConvKey, no_suitable_details)
+  end,
+  {ok, State};
+ssactor_handle_message("BookTravel", "Customer", _, _SenderRole, "ccInfoRequest", _, State, ConvKey) ->
+  actor_logger:info(customer, "CC Info request from travel agent ~n", []),
+  travel_agent:send_cc_info(ConvKey, "123123123", "01/04/2019", 123),
+  {ok, State};
+ssactor_handle_message("BookTravel", "Customer", _, _, "confirmation", _, State, ConvKey) ->
+  conversation:end_conversation(ConvKey, normal),
+  {ok, State};
+ssactor_handle_message("BookTravel", "Customer", _CID, _SenderRole, Op, Payload, State, _ConvKey) ->
+  actor_logger:err(customer, "Unhandled message: (~s,  ~w)", [Op, Payload]),
+  {ok, State}.
 
 terminate(_, _) -> ok.
+
+%%%%%%%%
+%%% API
+%%%%%%%%
+
+booking_response(ConvKey, Flights, Hotels) ->
+  conversation:send(ConvKey, ["Customer"], "customerResponse", [],
+                    [Flights, Hotels]).
+
+cc_info_request(ConvKey) ->
+  conversation:send(ConvKey, ["Customer"], "ccInfoRequest", [], []).
+
+confirmation(ConvKey) ->
+  conversation:send(ConvKey, ["Customer"], "confirmation", [], []).
