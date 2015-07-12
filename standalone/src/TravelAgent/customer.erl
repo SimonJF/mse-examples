@@ -45,8 +45,7 @@ ssactor_handle_message("BookTravel", "Customer", _, _SenderRole, "customerRespon
   % choose the first if we do.
   case {FlightDetailList, HotelDetailList} of
     {[Flight|_], [Hotel|_]} ->
-      FlightID = Flight#flight_details.flight_id,
-      travel_agent:booking_proceed(ConvKey, FlightID, Hotel);
+      travel_agent:booking_proceed(ConvKey, Flight, Hotel);
     _ ->
       % If not, send the cancelBooking message, and kill the session.
       travel_agent:booking_cancel(ConvKey),

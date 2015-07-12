@@ -20,7 +20,3 @@
                           check_out_date,
                           price
                         } ).
-
--record(flight_package, { package_id,
-                          outward_flight,
-                          return_flight} ).

@@ -13,7 +13,7 @@
 %   B -> seller (retry())
 %   B -> seller (quit())
 
-ssactor_init(_Args, _Monitor) -> {ok, no_state}. % We don't need no state round these parts
+ssactor_init(_Args, _Monitor) -> {ok, no_state}.
 
 ssactor_join(_, _, _, State) -> {accept, State}.
 

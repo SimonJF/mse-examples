@@ -9,10 +9,6 @@ ssactor_init(Args, ConvKey) ->
 ssactor_join(_, _, _, State) -> {accept, State}.
 
 ssactor_conversation_established(PN, RN, _CID, ConvKey, State) ->
-  if PN == "BookTravel" andalso RN == "PaymentProcessor" ->
-      conversation:send(ConvKey, ["S"], "title", ["String"], ["To Kill a Mockingbird"]);
-     true -> ok
-  end,
   {ok, State}.
 
 ssactor_conversation_error(_PN, _RN, Error, State) ->
@@ -25,13 +21,22 @@ ssactor_conversation_ended(CID, _Reason, State) ->
   {ok, State}.
 
 ssactor_handle_message("BookTravel", "PaymentProcessor", _CID, SenderRole, "processPayment",
-                       [CCNumber, ExpiryDate, CVC, Money], State, ConvKey) ->
-  conversation:send(ConvKey, ["TravelAgent"], "flightInfoResponse", [], [[]]),
-  {ok, no_state};
+                       [_CCNumber, _ExpiryDate, _CVC, _Money], State, ConvKey) ->
+  travel_agent:payment_confirmation(ConvKey),
+  {ok, State};
 ssactor_handle_message("BookTravel", "PaymentProcessor", _CID, _SenderRole,
-                       Op, Payload, _State, _ConvKey) ->
-  actor_logger:err(payment_processing_service, "Unhandled message: (~s,  ~w)", [Op, Payload]),
-  {ok, no_state}.
+                       Op, Payload, State, _ConvKey) ->
+  actor_logger:err(payment_processing_service, "Unhandled message: (~s,  ~w)",
+                   [Op, Payload]),
+  {ok, State}.
 
 terminate(_, _) -> ok.
+
+%%%%%
+%%% API
+%%%%%
+
+process_payment(ConvKey, CCNumber, ExpiryDate, CVC, Money) ->
+  conversation:send(ConvKey, "processPayment", [],
+                    [CCNumber, ExpiryDate, CVC, Money]).
 
