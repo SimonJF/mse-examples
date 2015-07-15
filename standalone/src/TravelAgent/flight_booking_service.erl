@@ -44,6 +44,9 @@ add_booking(OutwardID, ReturnID, Name, State) ->
   State#flight_booking_service_state{bookings=Bookings2}.
 
 find_flights(OriginAirport, DepartureDate, State) ->
+  FlightList = State#flight_booking_service_state.flights,
+  error_logger:info_msg("Find flights: OriginAirport: ~p, DepDate: ~p, FlightList:~p~n.",
+                        [OriginAirport, DepartureDate, FlightList]),
   find_flights_inner(State#flight_booking_service_state.flights,
                      OriginAirport, DepartureDate).
 
@@ -51,10 +54,10 @@ find_flights_inner([], _OriginAirport, _DepartureDate) -> [];
 find_flights_inner([Flight|Flights], OriginAirport, DepartureDate) ->
   OA = Flight#flight_details.origin_airport,
   DD = Flight#flight_details.departure_date,
-  if OA == OriginAirport andalso DD == DepartureDate ->
-       [Flight|find_flights(Flights, OriginAirport, DepartureDate)];
+  if (OA == OriginAirport) andalso (DD == DepartureDate) ->
+       [Flight|find_flights_inner(Flights, OriginAirport, DepartureDate)];
      true ->
-       find_flights(Flights, OriginAirport, DepartureDate)
+       find_flights_inner(Flights, OriginAirport, DepartureDate)
   end.
 
 ssactor_init(_Args, _ConvKey) ->
@@ -83,13 +86,16 @@ ssactor_handle_message("BookTravel", "FlightBookingService", _CID, _SenderRole,
   Destination = CustomerRequest#customer_booking_request.destination,
   OutwardFlights = find_flights(Origin, DepartureDate, State),
   ReturnFlights = find_flights(Destination, ReturnDate, State),
-  travel_agent:send_flight_info(ConvKey, [OutwardFlights, ReturnFlights]),
+  travel_agent:send_flight_info(ConvKey, OutwardFlights, ReturnFlights),
   {ok, State};
 ssactor_handle_message("BookTravel", "FlightBookingService", _CID, _SenderRole, "bookFlight",
                        [Name, OutwardFlightID, ReturnFlightID], State, ConvKey) ->
   State1 = add_booking(OutwardFlightID, ReturnFlightID, Name, State),
   travel_agent:flight_confirmation(ConvKey),
   {ok, State1};
+ssactor_handle_message(_, _, _CID, _SenderRole,
+                       "cancelBooking", _Payload, State, _ConvKey) ->
+  {ok, State};
 ssactor_handle_message("BookTravel", "FlightBookingService", _CID, _SenderRole,
                        Op, Payload, State, _ConvKey) ->
   actor_logger:err(flight_booking_service, "Unhandled message: (~s,  ~w)", [Op, Payload]),
@@ -105,6 +111,6 @@ get_flights(ConvKey, CustomerRequest) ->
   conversation:send(ConvKey, ["FlightBookingService"], "flightInfoRequest", [],
                     [CustomerRequest]).
 
-book_flight(ConvKey, CustomerName, OutwardFlightID, ReturnFlightID) ->
+book_flight(ConvKey, CustomerName, OutwardFlight, ReturnFlight) ->
   conversation:send(ConvKey, ["FlightBookingService"], "bookFlight", [],
-                    [CustomerName, OutwardFlightID, ReturnFlightID]).
+                    [CustomerName, OutwardFlight, ReturnFlight]).

@@ -35,7 +35,7 @@ ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "share", [Share], _St
        % We can afford it: accept, send address to buyer2 and server,
        % and retrieve the delivery date from the server
        actor_logger:info(buyer2, "Accepted share quote (threshold ~p)", [?PRICE_THRESHOLD]),
-       conversation:send(Monitor, ["A", "S"], "yup",
+       conversation:send(Monitor, ["A", "S"], "accept",
                          ["String"], ["Informatics Forum"])
   end,
   {ok, no_state};

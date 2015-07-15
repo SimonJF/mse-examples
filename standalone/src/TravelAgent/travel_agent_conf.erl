@@ -2,7 +2,7 @@
 -export([config/0]).
 % Config file
 config() ->
-  [{customer, [{"BookTravel", ["Customer"]}]},
+  [{travel_customer, [{"BookTravel", ["Customer"]}]},
    {travel_agent, [{"BookTravel", ["TravelAgent"]}]},
    {hotel_booking_service, [{"BookTravel", ["HotelBookingService"]}]},
    {payment_processing_service, [{"BookTravel", ["PaymentProcessor"]}]},

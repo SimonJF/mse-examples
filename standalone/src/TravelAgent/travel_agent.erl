@@ -6,11 +6,12 @@
 -record(travel_agent_state, { customer_info }).
 
 -record(booking_info, { customer_request,
-                        returned_flights,
+                        returned_outward_flights,
+                        returned_return_flights,
                         returned_hotels,
                         chosen_flights,
                         chosen_hotel,
-                        flight_booked=false,
+                        flights_booked=false,
                         hotel_booked=false,
                         cc_number,
                         cc_expiry_date,
@@ -22,7 +23,8 @@ fresh_state() ->
 
 fresh_booking_info(Request) ->
   #booking_info{customer_request=Request,
-                returned_flights=undefined,
+                returned_outward_flights=undefined,
+                returned_return_flights=undefined,
                 returned_hotels=undefined}.
 
 add_state_entry(CID, Request, State) ->
@@ -37,7 +39,7 @@ record_selections(CID, ChosenFlights, ChosenHotel, State) ->
   NewBookingInfo = BookingInfo#booking_info{chosen_flights=ChosenFlights,
                                             chosen_hotel=ChosenHotel},
   NewCustomerInfo = orddict:store(CID, NewBookingInfo, CustomerInfo),
-  NewState = State#travel_agent_state{customer_info=NewCustomerInfo}.
+  State#travel_agent_state{customer_info=NewCustomerInfo}.
 
 record_cc_info(CID, CCNumber, ExpiryDate, CVC, State) ->
   CustomerInfo = State#travel_agent_state.customer_info,
@@ -47,7 +49,7 @@ record_cc_info(CID, CCNumber, ExpiryDate, CVC, State) ->
                                             cc_cvc=CVC
                                            },
   NewCustomerInfo = orddict:store(CID, NewBookingInfo, CustomerInfo),
-  NewState = State#travel_agent_state{customer_info=NewCustomerInfo}.
+  State#travel_agent_state{customer_info=NewCustomerInfo}.
 
 update_booking_info(CID, NewBookingInfo, State) ->
   CustomerInfo = State#travel_agent_state.customer_info,
@@ -86,7 +88,7 @@ record_hotel_success(CID, ConvKey, State) ->
 
 record_flight_success(CID, ConvKey, State) ->
   BookingInfo = get_booking_info(CID, State),
-  NewBookingInfo = BookingInfo#booking_info{flight_booked=true},
+  NewBookingInfo = BookingInfo#booking_info{flights_booked=true},
   NewState = update_booking_info(CID, NewBookingInfo, State),
   check_booked(CID, ConvKey, NewState),
   NewState.
@@ -113,12 +115,15 @@ ssactor_conversation_ended(CID, _Reason, State) ->
 
 check_received_info(ConvKey, CID, State) ->
   BookingInfo = orddict:fetch(CID, State#travel_agent_state.customer_info),
-  ReturnedFlights = BookingInfo#booking_info.returned_flights,
+  ReturnedOutwardFlights = BookingInfo#booking_info.returned_outward_flights,
+  ReturnedReturnFlights = BookingInfo#booking_info.returned_return_flights,
   ReturnedHotels = BookingInfo#booking_info.returned_hotels,
-  if ReturnedFlights =/= undefined andalso ReturnedHotels =/= undefined ->
+  if ReturnedOutwardFlights =/= undefined andalso ReturnedReturnFlights =/= undefined
+     andalso ReturnedHotels =/= undefined ->
        % If both have been received, we can send the flights and
        % hotel details back to the user
-       customer:booking_response(ConvKey, ReturnedFlights, ReturnedHotels);
+       travel_customer:booking_response(ConvKey, ReturnedOutwardFlights,
+                                        ReturnedReturnFlights, ReturnedHotels);
      true -> ok
   end.
 
@@ -130,10 +135,12 @@ add_hotel_response(CID, HotelResponse, State) ->
   State#travel_agent_state{customer_info=NewCustomerInfo}.
 
 
-add_flight_response(CID, FlightResponse, State) ->
+add_flight_response(CID, OutwardFlightResponse, ReturnFlightResponse, State) ->
   CustomerInfo = State#travel_agent_state.customer_info,
   BookingInfo = orddict:fetch(CID, CustomerInfo),
-  NewBookingInfo = BookingInfo#booking_info{returned_flights=FlightResponse},
+  NewBookingInfo = BookingInfo#booking_info{returned_outward_flights=OutwardFlightResponse,
+                                            returned_return_flights=ReturnFlightResponse
+                                           },
   NewCustomerInfo = orddict:store(CID, NewBookingInfo, CustomerInfo),
   State#travel_agent_state{customer_info=NewCustomerInfo}.
 
@@ -146,11 +153,12 @@ book_flights_and_hotel(CID, ConvKey, State) ->
   Hotel = BookingInfo#booking_info.chosen_hotel,
   CR = BookingInfo#booking_info.customer_request,
   Name = CR#customer_booking_request.name,
+  error_logger:info_msg("Hotel: ~p~n", [Hotel]),
   HotelName = Hotel#hotel_details.hotel_name,
   CheckInDate = Hotel#hotel_details.check_in_date,
   CheckOutDate = Hotel#hotel_details.check_out_date,
   flight_booking_service:book_flight(ConvKey, Name, OutwardFlight, ReturnFlight),
-  hotel_booking_service:book_hotel(ConvKey, Name, CheckInDate, CheckOutDate).
+  hotel_booking_service:book_hotel(ConvKey, Name, HotelName, CheckInDate, CheckOutDate).
 
 ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "customerRequest",
                        [CustomerRequest], State, ConvKey) ->
@@ -160,8 +168,8 @@ ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "customerR
   NewState = add_state_entry(CID, CustomerRequest, State),
   {ok, NewState};
 ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "flightInfoResponse",
-                       [FlightDetailList], State, ConvKey) ->
-  NewState = add_flight_response(CID, FlightDetailList, State),
+                       [OutwardFlights, ReturnFlights], State, ConvKey) ->
+  NewState = add_flight_response(CID, OutwardFlights, ReturnFlights, State),
   check_received_info(ConvKey, CID, NewState),
   {ok, NewState};
 ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "hotelInfoResponse",
@@ -177,7 +185,7 @@ ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "cancelBoo
 ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "proceedWithBooking",
                        [ChosenOutwardFlight, ChosenReturnFlight, ChosenHotel], State, ConvKey) ->
   NewState = record_selections(CID, [ChosenOutwardFlight, ChosenReturnFlight], ChosenHotel, State),
-  customer:cc_info_request(ConvKey),
+  travel_customer:cc_info_request(ConvKey),
   {ok, NewState};
 ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "ccInfoResponse",
                       [CCNum, ExpiryDate, CVC], State, ConvKey) ->
@@ -194,10 +202,10 @@ ssactor_handle_message("BookTravel", "TravelAgent", CID, _SenderRole, "hotelBook
   {ok, State};
 ssactor_handle_message("BookTravel", "TravelAgent", _CID, _SenderRole, "paymentConfirmation", [],
                        State, ConvKey) ->
-  customer:confirmation(ConvKey),
+  travel_customer:confirmation(ConvKey),
   {ok, State};
 ssactor_handle_message("BookTravel", "TravelAgent", _CID, _SenderRole, Op, Payload, State, _ConvKey) ->
-  actor_logger:err(travel_agent, "Unhandled message: (~s,  ~w)", [Op, Payload]),
+  actor_logger:err(travel_agent, "Unhandled message: (~s,  ~p)", [Op, Payload]),
   {ok, State}.
 
 terminate(_, _) -> ok.
@@ -211,8 +219,8 @@ booking_request(ConvKey, CustomerRequest) ->
   conversation:send(ConvKey, ["TravelAgent"], "customerRequest", [],
                     [CustomerRequest]).
 
-booking_proceed(ConvKey, FlightID, HotelID) ->
-  conversation:send(ConvKey, ["TravelAgent"], "proceedWithBooking", [], [FlightID, HotelID]).
+booking_proceed(ConvKey, OutwardFlight, ReturnFlight, HotelID) ->
+  conversation:send(ConvKey, ["TravelAgent"], "proceedWithBooking", [], [OutwardFlight, ReturnFlight, HotelID]).
 
 booking_cancel(ConvKey) ->
   conversation:send(ConvKey, ["TravelAgent"], "cancelBooking", [], []).
@@ -221,9 +229,9 @@ send_cc_info(ConvKey, CCNum, ExpiryDate, CVC) ->
   conversation:send(ConvKey, ["TravelAgent"], "ccInfoResponse", [],
                     [CCNum, ExpiryDate, CVC]).
 
-send_flight_info(ConvKey, FlightInfo) ->
+send_flight_info(ConvKey, OutwardFlightInfo, ReturnFlightInfo) ->
   conversation:send(ConvKey, ["TravelAgent"], "flightInfoResponse", [],
-                    [FlightInfo]).
+                    [OutwardFlightInfo, ReturnFlightInfo]).
 
 send_hotel_info(ConvKey, HotelInfo) ->
   conversation:send(ConvKey, ["TravelAgent"], "hotelInfoResponse", [],

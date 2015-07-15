@@ -24,6 +24,9 @@ ssactor_handle_message("BookTravel", "PaymentProcessor", _CID, SenderRole, "proc
                        [_CCNumber, _ExpiryDate, _CVC, _Money], State, ConvKey) ->
   travel_agent:payment_confirmation(ConvKey),
   {ok, State};
+ssactor_handle_message(_, _, _CID, _SenderRole,
+                       "cancelBooking", _Payload, State, _ConvKey) ->
+  {ok, State};
 ssactor_handle_message("BookTravel", "PaymentProcessor", _CID, _SenderRole,
                        Op, Payload, State, _ConvKey) ->
   actor_logger:err(payment_processing_service, "Unhandled message: (~s,  ~w)",

@@ -12,7 +12,13 @@
 
 
 fresh_state() ->
-  Hotels = [{"BUD", ["Grand Budapest"]}],
+  GrandBudapestHotel = #hotel_details{hotel_name="Grand Budapest Hotel",
+                                      check_in_date="2015-08-22",
+                                      check_out_date="2015-08-29",
+                                      price="300"
+                                     },
+
+  Hotels = [{"BUD", [GrandBudapestHotel]}],
   #hotel_booking_service_state{hotels=orddict:from_list(Hotels),
                                bookings=orddict:new()}.
 
@@ -62,10 +68,13 @@ ssactor_handle_message("BookTravel", "HotelBookingService", _CID, _SenderRole, "
   NewState = add_booking(Name, HotelName, CheckinDate, CheckoutDate, State),
   travel_agent:hotel_confirmation(ConvKey),
   {ok, NewState};
+ssactor_handle_message(_, _, _CID, _SenderRole,
+                       "cancelBooking", _Payload, State, _ConvKey) ->
+  {ok, State};
 ssactor_handle_message("BookTravel", "HotelBookingService", _CID, _SenderRole,
-                       Op, Payload, _State, _ConvKey) ->
+                       Op, Payload, State, _ConvKey) ->
   actor_logger:err(hotel_booking_service, "Unhandled message: (~s,  ~w)", [Op, Payload]),
-  {ok, no_state}.
+  {ok, State}.
 
 terminate(_, _) -> ok.
 
@@ -76,9 +85,9 @@ terminate(_, _) -> ok.
 
 
 get_hotels(ConvKey, CustomerRequest) ->
-  conversation:send(ConvKey, ["FlightBookingService"], "hotelInfoRequest", [],
+  conversation:send(ConvKey, ["HotelBookingService"], "hotelInfoRequest", [],
                     [CustomerRequest]).
 
 book_hotel(ConvKey, CustomerName, HotelName, CheckInDate, CheckOutDate) ->
-  conversation:send(ConvKey, ["FlightBookingService"], "bookFlight", [],
+  conversation:send(ConvKey, ["HotelBookingService"], "bookHotel", [],
                     [CustomerName, HotelName, CheckInDate, CheckOutDate]).
