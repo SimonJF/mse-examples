@@ -1,0 +1,75 @@
+module src.com.simonjf.ScribbleExamples.TravelBooking.TravelBookingSplit_TravelAgent;
+
+type <erlang> "atom" from "" as RequestInfo;
+type <erlang> "list" from "" as FlightDetails;
+type <erlang> "list" from "" as HotelDetails;
+type <erlang> "int" from "" as BookingID;
+type <erlang> "int" from "" as CCNumber;
+type <erlang> "string" from "" as Name;
+type <erlang> "string" from "" as ExpiryDate;
+type <erlang> "string" from "" as CheckInDate;
+type <erlang> "string" from "" as CheckOutDate;
+type <erlang> "int" from "" as CVC;
+type <erlang> "int" from "" as OutwardFlight;
+type <erlang> "int" from "" as ReturnFlight;
+type <erlang> "list" from "" as OutwardFlights;
+type <erlang> "list" from "" as ReturnFlights;
+type <erlang> "string" from "" as HotelName;
+type <erlang> "float" from "" as Money;
+
+local protocol BookTravel at TravelAgent(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	customerRequest(RequestInfo) from Customer;
+	par {
+		flightInfoRequest(RequestInfo) to FlightBookingService;
+		flightInfoResponse(OutwardFlights,ReturnFlights) from FlightBookingService;
+	} and {
+		hotelInfoRequest(RequestInfo) to HotelBookingService;
+		hotelInfoResponse(HotelDetails) from HotelBookingService;
+	}
+	customerResponse(OutwardFlights,ReturnFlights,HotelDetails) to Customer;
+	choice at Customer {
+		proceedWithBooking(OutwardFlight,ReturnFlight,HotelName) from Customer;
+		rec BookingLoop {
+			TravelAgent initiates PerformBooking( TravelAgent , Customer , new FlightBookingService , new HotelBookingService ) {
+				TravelAgent initiates PerformPayment( TravelAgent , new PaymentProcessor ) {
+					confirmation() to Customer;
+				} handle (PaymentFailure) {
+					paymentFail() to Customer;
+					continue BookingLoop;
+				}
+			} handle (BookingFailure) {
+				bookingFail() to Customer;
+				TravelAgent initiates CancelBookings( TravelAgent , new FlightBookingService , new HotelBookingService ) {
+					continue BookingLoop;
+				}
+			}
+		}
+	} or {
+		cancelBooking() from Customer;
+	}
+}
+
+local protocol PerformBooking at TravelAgent(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	ccInfoRequest() to Customer;
+	ccInfoResponse(CCNumber,ExpiryDate,CVC) from Customer;
+	par {
+		bookFlight(Name,OutwardFlight,ReturnFlight) to FlightBookingService;
+		flightBookingConfirmation() from FlightBookingService;
+	} and {
+		bookHotel(Name,HotelName,CheckInDate,CheckOutDate) to HotelBookingService;
+		hotelBookingConfirmation() from HotelBookingService;
+	}
+}
+
+local protocol PerformPayment at TravelAgent(role TravelAgent,role PaymentProcessor) {
+	processPayment(CCNumber,ExpiryDate,CVC,Money) to PaymentProcessor;
+	paymentConfirmation() from PaymentProcessor;
+}
+
+local protocol CancelBookings at TravelAgent(role TravelAgent,role FlightBookingService,role HotelBookingService) {
+	par {
+		cancelFlightBooking() to FlightBookingService;
+	} and {
+		cancelHotelBooking() to HotelBookingService;
+	}
+}

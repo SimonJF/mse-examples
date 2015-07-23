@@ -1,0 +1,43 @@
+module src.com.simonjf.ScribbleExamples.TravelBooking.TravelBookingSplit_Customer;
+
+type <erlang> "atom" from "" as RequestInfo;
+type <erlang> "list" from "" as FlightDetails;
+type <erlang> "list" from "" as HotelDetails;
+type <erlang> "int" from "" as BookingID;
+type <erlang> "int" from "" as CCNumber;
+type <erlang> "string" from "" as Name;
+type <erlang> "string" from "" as ExpiryDate;
+type <erlang> "string" from "" as CheckInDate;
+type <erlang> "string" from "" as CheckOutDate;
+type <erlang> "int" from "" as CVC;
+type <erlang> "int" from "" as OutwardFlight;
+type <erlang> "int" from "" as ReturnFlight;
+type <erlang> "list" from "" as OutwardFlights;
+type <erlang> "list" from "" as ReturnFlights;
+type <erlang> "string" from "" as HotelName;
+type <erlang> "float" from "" as Money;
+
+local protocol BookTravel at Customer(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	customerRequest(RequestInfo) to TravelAgent;
+	customerResponse(OutwardFlights,ReturnFlights,HotelDetails) from TravelAgent;
+	choice at Customer {
+		proceedWithBooking(OutwardFlight,ReturnFlight,HotelName) to TravelAgent;
+		rec BookingLoop {
+			choice at TravelAgent {
+				confirmation() from TravelAgent;
+			} or {
+				paymentFail() from TravelAgent;
+				continue BookingLoop;
+			} or {
+				bookingFail() from TravelAgent;
+			}
+		}
+	} or {
+		cancelBooking() to TravelAgent;
+	}
+}
+
+local protocol PerformBooking at Customer(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	ccInfoRequest() from TravelAgent;
+	ccInfoResponse(CCNumber,ExpiryDate,CVC) to TravelAgent;
+}

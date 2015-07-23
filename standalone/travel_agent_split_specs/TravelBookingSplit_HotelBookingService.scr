@@ -1,0 +1,41 @@
+module src.com.simonjf.ScribbleExamples.TravelBooking.TravelBookingSplit_HotelBookingService;
+
+type <erlang> "atom" from "" as RequestInfo;
+type <erlang> "list" from "" as FlightDetails;
+type <erlang> "list" from "" as HotelDetails;
+type <erlang> "int" from "" as BookingID;
+type <erlang> "int" from "" as CCNumber;
+type <erlang> "string" from "" as Name;
+type <erlang> "string" from "" as ExpiryDate;
+type <erlang> "string" from "" as CheckInDate;
+type <erlang> "string" from "" as CheckOutDate;
+type <erlang> "int" from "" as CVC;
+type <erlang> "int" from "" as OutwardFlight;
+type <erlang> "int" from "" as ReturnFlight;
+type <erlang> "list" from "" as OutwardFlights;
+type <erlang> "list" from "" as ReturnFlights;
+type <erlang> "string" from "" as HotelName;
+type <erlang> "float" from "" as Money;
+
+local protocol BookTravel at HotelBookingService(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	par {
+	} and {
+		hotelInfoRequest(RequestInfo) from TravelAgent;
+		hotelInfoResponse(HotelDetails) to TravelAgent;
+	}
+}
+
+local protocol PerformBooking at HotelBookingService(role TravelAgent,role Customer,role FlightBookingService,role HotelBookingService) {
+	par {
+	} and {
+		bookHotel(Name,HotelName,CheckInDate,CheckOutDate) from TravelAgent;
+		hotelBookingConfirmation() to TravelAgent;
+	}
+}
+
+local protocol CancelBookings at HotelBookingService(role TravelAgent,role FlightBookingService,role HotelBookingService) {
+	par {
+	} and {
+		cancelHotelBooking() from TravelAgent;
+	}
+}
