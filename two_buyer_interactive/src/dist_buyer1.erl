@@ -56,6 +56,10 @@ ssactor_become(_, _, send_title, _Args, ConvKey, State) ->
 
 terminate(_, _) -> ok.
 
+ssactor_conversation_ended(_CID, Reason, UserState) ->
+  actor_logger:info(buyer1, "Conv ended for reason ~p", [Reason]),
+  {ok, UserState}.
+
 
 %%%%%%%% API Functions
 %%% Worth noting that a common pattern in Erlang is to register a PID

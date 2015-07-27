@@ -63,6 +63,10 @@ ssactor_become(_, _, send_date, _Args, ConvKey, State) ->
   conversation:send(ConvKey, ["B"], "date", ["String"], [?DELIVERY_DATE]),
   {ok, State}.
 
+ssactor_conversation_ended(_CID, Reason, UserState) ->
+  actor_logger:info(seller, "Conv ended for reason ~p", [Reason]),
+  {ok, UserState}.
+
 
 %%%%%%%%%%
 %%% API

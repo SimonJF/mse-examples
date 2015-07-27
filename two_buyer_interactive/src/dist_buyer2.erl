@@ -53,6 +53,11 @@ ssactor_become(_, _, send_accept, _Args, ConvKey, State) ->
                          ["String"], ["Informatics Forum"]),
   {ok, State}.
 
+ssactor_conversation_ended(_CID, Reason, UserState) ->
+  actor_logger:info(buyer2, "Conv ended for reason ~p", [Reason]),
+  {ok, UserState}.
+
+
 handle_call(_, _, State) -> {noreply, State}.
 
 handle_cast(send_title, MonitorPID) ->
