@@ -233,11 +233,17 @@ ssactor_subsession_complete("PerformBooking", _, State, ConvKey) ->
   {ok, State};
 ssactor_subsession_complete("PerformPayment", _, State, ConvKey) ->
   travel_customer_split:confirmation(ConvKey),
+  {ok, State};
+ssactor_subsession_complete("CancelBookings", _, State, ConvKey) ->
+  conversation:start_subsession(ConvKey, "PerformBooking", ["TravelAgent", "Customer"],
+  ["FlightBookingService", "HotelBookingService"]),
   {ok, State}.
+ssactor_subsession_failed("PerformBooking", "BookingFailure", State, ConvKey) ->
+  travel_customer_split:booking_failed(ConvKey),
+  conversation:start_subsession(ConvKey, "CancelBookings", ["TravelAgent"],
+                                ["FlightBookingService", "HotelBookingService"]),
 
-ssactor_subsession_failed(Name, FailureReason, State, ConvKey) ->
   {ok, State}.
-
 ssactor_subsession_setup_failed(Name, Reason, State, ConvKey) ->
   {ok, State}.
 

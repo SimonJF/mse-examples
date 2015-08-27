@@ -17,6 +17,9 @@ type <erlang> "list" from "" as ReturnFlights;
 type <erlang> "string" from "" as HotelName;
 type <erlang> "float" from "" as Money;
 
+local protocol BookTravel at PaymentProcessor(role TravelAgent, role Customer, role FlightBookingService, role HotelBookingService, role PaymentProcessor) {
+}
+
 local protocol PerformPayment at PaymentProcessor(role TravelAgent,role PaymentProcessor) {
 	processPayment(CCNumber,ExpiryDate,CVC,Money) from TravelAgent;
 	paymentConfirmation() to TravelAgent;

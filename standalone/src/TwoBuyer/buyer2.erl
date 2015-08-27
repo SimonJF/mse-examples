@@ -22,27 +22,28 @@ ssactor_conversation_ended(CID, _Reason, State) ->
   actor_logger:info(buyer2, "Conversation ~p ended.~n", [CID]),
   {ok, State}.
 
-ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "quote", [QuoteInt], _State, _Monitor) ->
+ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "quote", [QuoteInt], _State, _ConvKey) ->
   actor_logger:info(buyer2, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
   {ok, no_state};
-ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "share", [Share], _State, Monitor) ->
+ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "share", [Share], _State, ConvKey) ->
   actor_logger:info(buyer2, "Received share quote (~p) from ~s", [Share, SenderRole]),
   if Share >= ?PRICE_THRESHOLD ->
        % Nah, we aint paying that
        actor_logger:info(buyer2, "Rejected share quote (threshold ~p)", [?PRICE_THRESHOLD]),
-       conversation:send(Monitor, ["A", "S"], "quit", [], []);
+       conversation:send(ConvKey, ["A", "S"], "quit", [], []);
      Share < ?PRICE_THRESHOLD ->
        % We can afford it: accept, send address to buyer2 and server,
        % and retrieve the delivery date from the server
        actor_logger:info(buyer2, "Accepted share quote (threshold ~p)", [?PRICE_THRESHOLD]),
-       conversation:send(Monitor, ["A", "S"], "accept",
+       conversation:send(ConvKey, ["A", "S"], "accept",
                          ["String"], ["Informatics Forum"])
   end,
   {ok, no_state};
-ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "date", [DeliveryDate], _State, _Monitor) ->
+ssactor_handle_message("TwoBuyers", "B", _CID, SenderRole, "date", [DeliveryDate], _State, ConvKey) ->
   actor_logger:info(buyer2, "Received delivery date of ~s from ~s", [DeliveryDate, SenderRole]),
+  conversation:end_conversation(ConvKey, normal),
   {ok, no_state};
-ssactor_handle_message("TwoBuyers", "B", _CID, _SenderRole, Op, Payload, _State, _Monitor) ->
+ssactor_handle_message("TwoBuyers", "B", _CID, _SenderRole, Op, Payload, _State, _ConvKey) ->
   actor_logger:err(buyer2, "Unhandled message: (~s, ~w)", [Op, Payload]),
   {ok, no_state}.
 

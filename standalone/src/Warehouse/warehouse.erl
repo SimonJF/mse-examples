@@ -99,6 +99,6 @@ ssactor_handle_message("StoreLoad", "Store", _CID, _SenderRole,
 ssactor_become("StoreLoad", "Store", restock, [ItemName, Quantity], ConvKey, State) ->
   actor_logger:info(warehouse, "StoreLoad protocol: sending restock request", []),
   conversation:send(ConvKey, ["Dealer"], "request", ["String", "Integer"], [ItemName, Quantity]),
-  State.
+  {ok, State}.
 
 

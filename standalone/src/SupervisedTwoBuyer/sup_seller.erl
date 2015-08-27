@@ -24,7 +24,6 @@ ssactor_conversation_error(_, _, _, State) -> {ok, State}.
 
 ssactor_conversation_ended(CID, _Reason, State) ->
   actor_logger:info(seller, "Conversation ~p ended.~n", [CID]),
-  exit(boom),
   {ok, State}.
 
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _State, ConvKey) ->
@@ -33,7 +32,7 @@ ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _St
   {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "accept", [Address], _State, ConvKey) ->
   actor_logger:info(seller, "~s accepted quote; received address ~s", [SenderRole, Address]),
-  conversation:send(ConvKey, ["B"], "date", ["String"], [?DELIVERY_DATE]),
+  conversation:send(ConvKey, ["B"], "datum", ["String"], [?DELIVERY_DATE]),
   conversation:end_conversation(ConvKey, normal),
   {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "retry", _, _State, _ConvKey) ->
@@ -46,6 +45,10 @@ ssactor_handle_message("TwoBuyers", "S", _CID, _SenderRole, Op, Payload, _State,
   actor_logger:err(seller, "Unhandled message: (~s, ~w)", [Op, Payload]),
   {ok, no_state}.
 
+terminate(_, _) -> ok.
+handle_call(_, _, State) -> {noreply, State}.
+handle_cast(_, State) -> {noreply, State}.
+handle_info(_, State) -> {noreply, State}.
 
 start_link() ->
   ssa_gen_server:start_link(sup_seller, [], []).

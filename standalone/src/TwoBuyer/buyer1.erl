@@ -2,15 +2,6 @@
 -behaviour(ssa_gen_server).
 -compile(export_all).
 
-% Buyer 1:
-%   Buyer 1 -> Server (title(String))
-%   Server -> Buyer 1 (quote(Int))
-%   Buyer 1 -> Buyer 2 (share(Int))
-%   Choice:
-%     Buyer2 -> Buyer 1 (accept(String))
-%     Buyer2 -> Buyer 1 (retry())
-%     Buyer2 -> Buyer 1 (quit())
-
 ssactor_init(_Args, Monitor) ->
   % Start the conversation
   io:format("Starting conversation in buyer1.~n", []),
@@ -36,21 +27,30 @@ ssactor_conversation_ended(CID, _Reason, State) ->
   actor_logger:info(buyer1, "Conversation ~p ended.~n", [CID]),
   {ok, State}.
 
-ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quote", [QuoteInt], _State, Monitor) ->
+ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quote", [QuoteInt], State, ConvKey) ->
   actor_logger:info(buyer1, "Received quote of ~p from ~s", [QuoteInt, SenderRole]),
-  conversation:send(Monitor, ["B"], "share", ["Integer"], [QuoteInt div 2]),
-  {ok, no_state};
-ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "accept", [Address], _State, _Monitor) ->
+  conversation:send(ConvKey, ["B"], "share", ["Integer"], [QuoteInt div 2]),
+  {ok, State};
+ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "accept", [Address], State, _ConvKey) ->
   actor_logger:info(buyer1, "~s accepted quote; received address (~p)", [SenderRole, Address]),
-  {ok, no_state};
-ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "retry", _, _State, _Monitor) ->
+  {ok, State};
+ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "retry", _, State, _ConvKey) ->
   actor_logger:info(buyer1, "~s wants to retry", [SenderRole]),
-  {ok, no_state};
-ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quit", _, _State, _Monitor) ->
+  {ok, State};
+ssactor_handle_message("TwoBuyers", "A", _, SenderRole, "quit", _, State, _ConvKey) ->
   actor_logger:info(buyer1, "~s wants to quit", [SenderRole]),
-  {ok, no_state};
-ssactor_handle_message("TwoBuyers", "A", _CID, _SenderRole, Op, Payload, _State, _Monitor) ->
+  {ok, State};
+ssactor_handle_message("TwoBuyers", "A", _CID, _SenderRole, Op, Payload, State, _ConvKey) ->
   actor_logger:err(buyer1, "Unhandled message: (~s,  ~w)", [Op, Payload]),
-  {ok, no_state}.
+  {ok, State}.
 
+ssactor_become(_, _, _, _, State) -> {stop, unexpected_become, State}.
+ssactor_subsession_complete(_, _, State, _) -> {stop, unexpected_become, State}.
+ssactor_subsession_failed(_, _, State, _) -> {ok, State}.
+ssactor_subsession_setup_failed(_, _, State, _) -> {ok, State}.
+
+handle_call(_, _, State) -> {stop, unexpected_call, State}.
+handle_cast(_, State) -> {stop, unexpected_cast, State}.
+handle_info(_, State) -> {stop, unexpected_info, State}.
+code_change(_, State, _) -> {ok, State}.
 terminate(_, _) -> ok.

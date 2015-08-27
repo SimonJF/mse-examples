@@ -31,7 +31,6 @@ ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "title", [Title], _St
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "accept", [Address], _State, ConvKey) ->
   actor_logger:info(seller, "~s accepted quote; received address ~s", [SenderRole, Address]),
   conversation:send(ConvKey, ["B"], "date", ["String"], [?DELIVERY_DATE]),
-  conversation:end_conversation(ConvKey, normal),
   {ok, no_state};
 ssactor_handle_message("TwoBuyers", "S", _CID, SenderRole, "retry", _, _State, _ConvKey) ->
   actor_logger:info(seller, "~s wants to retry", ["TwoBuyers", SenderRole]),

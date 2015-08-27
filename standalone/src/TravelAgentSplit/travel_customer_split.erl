@@ -60,6 +60,8 @@ ssactor_handle_message("PerformBooking", "Customer", _, _SenderRole, "ccInfoRequ
 ssactor_handle_message("BookTravel", "Customer", _, _, "confirmation", _, State, ConvKey) ->
   conversation:end_conversation(ConvKey, normal),
   {ok, State};
+ssactor_handle_message("BookTravel", "Customer", _, _, "bookingFail", _, State, ConvKey) ->
+  {ok, State};
 ssactor_handle_message("BookTravel", "Customer", _CID, _SenderRole, Op, Payload, State, _ConvKey) ->
   actor_logger:err(customer, "Unhandled message: (~s,  ~p)", [Op, Payload]),
   {ok, State}.
@@ -73,6 +75,10 @@ terminate(_, _) -> ok.
 booking_response(ConvKey, OutwardFlights, ReturnFlights, Hotels) ->
   conversation:send(ConvKey, ["Customer"], "customerResponse", [],
                     [OutwardFlights, ReturnFlights, Hotels]).
+
+booking_failed(ConvKey) ->
+  conversation:send(ConvKey, ["Customer"], "bookingFail", [],
+                    []).
 
 cc_info_request(ConvKey) ->
   conversation:send(ConvKey, ["Customer"], "ccInfoRequest", [], []).
