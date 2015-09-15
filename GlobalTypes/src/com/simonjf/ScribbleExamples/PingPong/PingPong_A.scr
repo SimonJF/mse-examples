@@ -1,0 +1,9 @@
+module src.com.simonjf.ScribbleExamples.PingPong.PingPong_A;
+
+local protocol PingPong at A(role A,role B) {
+	rec loop {
+		ping() to B;
+		pong() from B;
+		continue loop;
+	}
+}

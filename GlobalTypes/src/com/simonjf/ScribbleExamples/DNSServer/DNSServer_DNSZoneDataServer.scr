@@ -1,0 +1,13 @@
+module src.com.simonjf.ScribbleExamples.DNSServer.DNSServer_DNSZoneDataServer;
+
+type <erlang> "atom" from "" as EncodedRequest;
+type <erlang> "pid" from "" as ZonePID;
+type <erlang> "atom" from "" as RRTree;
+type <erlang> "string" from "" as DomainName;
+type <erlang> "list" from "" as StringList;
+type <erlang> "string" from "" as Zone;
+
+local protocol GetZoneData at DNSZoneDataServer(role UDPHandlerServer,role DNSZoneDataServer) {
+	receive_call_request ZoneDataRequest() from UDPHandlerServer;
+	send_call_response ZoneDataRequest(RRTree) to UDPHandlerServer;
+}

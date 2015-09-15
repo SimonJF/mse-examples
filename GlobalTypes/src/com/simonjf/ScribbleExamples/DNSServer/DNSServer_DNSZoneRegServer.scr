@@ -1,0 +1,19 @@
+module src.com.simonjf.ScribbleExamples.DNSServer.DNSServer_DNSZoneRegServer;
+
+type <erlang> "atom" from "" as EncodedRequest;
+type <erlang> "pid" from "" as ZonePID;
+type <erlang> "atom" from "" as RRTree;
+type <erlang> "string" from "" as DomainName;
+type <erlang> "list" from "" as StringList;
+type <erlang> "string" from "" as Zone;
+
+local protocol HandleDNSRequest at DNSZoneRegServer(role UDPHandlerServer,role DNSZoneRegServer) {
+	rec QueryResolution {
+		FindNearestZone(DomainName) from UDPHandlerServer;
+		choice at DNSZoneRegServer {
+			ZoneResponse(ZonePID) to UDPHandlerServer;
+		} or {
+			InvalidZone() to UDPHandlerServer;
+		}
+	}
+}

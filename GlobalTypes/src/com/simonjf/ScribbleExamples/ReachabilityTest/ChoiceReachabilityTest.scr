@@ -1,0 +1,14 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ChoiceReachabilityTest;
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ChoiceReachabilityTest;
+
+global protocol ChoiceReachabilityTest(role A, role B, role C) {
+	hello() from A to B;
+  choice at B {
+    X() from B to A;
+    Y() from A to C;
+  } or {
+    Z() from B to A, C;
+  }
+
+  End() from C to A;
+}

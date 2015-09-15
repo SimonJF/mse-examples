@@ -1,0 +1,33 @@
+module src.com.simonjf.ScribbleExamples.DNSServer.DNSServer;
+
+type <erlang> "atom" from "" as EncodedRequest;
+type <erlang> "pid" from "" as ZonePID;
+type <erlang> "atom" from "" as RRTree;
+type <erlang> "string" from "" as DomainName;
+type <erlang> "list" from "" as StringList;
+type <erlang> "string" from "" as Zone;
+
+
+global protocol HandleDNSRequest(role UDPHandlerServer, role DNSZoneRegServer) {
+	rec QueryResolution {
+		// Request the nearest zone
+		FindNearestZone(DomainName) from UDPHandlerServer to DNSZoneRegServer;
+
+		// Either we have it, or we don't...
+		choice at DNSZoneRegServer {
+			// If we do, then get the PID for the zone data server
+	   		ZoneResponse(ZonePID) from DNSZoneRegServer to UDPHandlerServer;
+	   		// Introduce the zone data server using a subsession
+        UDPHandlerServer initiates GetZoneData(UDPHandlerServer, new DNSZoneDataServer) {
+          // Now we've done that, we can do possible recursive lookups
+          continue QueryResolution;
+        }
+		} or {
+			InvalidZone() from DNSZoneRegServer to UDPHandlerServer;
+		}
+	}
+}
+
+global protocol GetZoneData(role UDPHandlerServer, role DNSZoneDataServer) {
+    call ZoneDataRequest() returning RRTree from UDPHandlerServer to DNSZoneDataServer {}
+}

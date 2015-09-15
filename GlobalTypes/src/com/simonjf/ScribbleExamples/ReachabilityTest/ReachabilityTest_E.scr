@@ -1,0 +1,5 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ReachabilityTest_E;
+
+local protocol ReachabilityTest at E(role A,role B,role C,role D,role E) {
+	hi() to A;
+}

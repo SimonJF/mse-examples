@@ -1,0 +1,4 @@
+module src.com.simonjf.ScribbleExamples.Chatterl.Chatterl;
+
+global protocol ProtocolName(role Role1, role Role2) {
+}

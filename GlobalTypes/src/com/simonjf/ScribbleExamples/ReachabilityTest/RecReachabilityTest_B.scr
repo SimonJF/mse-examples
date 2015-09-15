@@ -1,0 +1,13 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.RecReachabilityTest_B;
+
+local protocol RecReachabilityTest at B(role A,role B,role C) {
+	hello() from A;
+	rec loop {
+		choice at B {
+			X() to A;
+			continue loop;
+		} or {
+			Z() to A;
+		}
+	}
+}

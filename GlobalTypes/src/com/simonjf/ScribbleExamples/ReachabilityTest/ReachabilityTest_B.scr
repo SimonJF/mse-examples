@@ -1,0 +1,19 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ReachabilityTest_B;
+
+local protocol ReachabilityTest at B(role A,role B,role C,role D,role E) {
+	hello() from A;
+	choice at B {
+		X() to A,C,D;
+	} or {
+		rec blah {
+			Y() to A,C,D;
+			continue blah;
+		}
+	} or {
+		pines() to A,C;
+		par {
+		} and {
+			bobsleigh1() from C;
+		}
+	}
+}

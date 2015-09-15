@@ -1,0 +1,61 @@
+module src.com.simonjf.ScribbleExamples.ChatServer.ChatServer;
+
+type <erlang> "string" from "" as Username;
+type <erlang> "string" from "" as Password;
+type <erlang> "tuple" from "" as ClientData;
+type <erlang> "string" from "" as String;
+type <erlang> "string" from "" as RoomName;
+type <erlang> "list" from "" as StringList;
+type <erlang> "string" from "" as PID;
+
+
+global protocol ChatServer(role ClientThread, role RoomRegistry) {
+	rec ClientChoiceLoop {
+		// When not in a room, a user can either join, create, or list the rooms.
+		choice at ClientThread {
+			lookupRoom(RoomName) from ClientThread to RoomRegistry;
+			choice at RoomRegistry {
+				roomPID(RoomName, PID) from RoomRegistry to ClientThread;
+				ClientThread initiates ChatSession(ClientThread, new ChatRoom) {
+					continue ClientChoiceLoop;
+				} handle (ParticipantOffline) {
+          continue ClientChoiceLoop;
+        }
+			} or {
+				roomNotFound(RoomName) from RoomRegistry to ClientThread;
+			}
+		} or {
+			createRoom(RoomName) from ClientThread to RoomRegistry;
+			choice at RoomRegistry {
+				createRoomSuccess(RoomName) from RoomRegistry to ClientThread;
+			} or {
+				roomExists(RoomName) from RoomRegistry to ClientThread;
+			}
+		} or {
+			listRooms() from ClientThread to RoomRegistry;
+			roomList(StringList) from RoomRegistry to ClientThread;
+		}
+		continue ClientChoiceLoop;
+	}
+}
+
+global protocol ChatSession(role ClientThread, role ChatRoom) {
+	// Communication is bidirectional: a client can send messages to the
+	// server (either chat messages or control messages), and the server
+	// can send messages to the client (incoming chat messages)
+	par {
+		rec ClientLoop {
+			choice at ClientThread {
+				outgoingChatMessage(String) from ClientThread to ChatRoom;
+				continue ClientLoop;
+			} or {
+				leaveRoom() from ClientThread to ChatRoom;
+			}
+		}
+	} and {
+		rec ServerLoop {
+			incomingChatMessage(String) from ChatRoom to ClientThread;
+			continue ServerLoop;
+		}
+	}
+}

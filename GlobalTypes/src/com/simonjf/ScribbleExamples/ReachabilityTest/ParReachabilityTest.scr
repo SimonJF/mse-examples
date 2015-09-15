@@ -1,0 +1,12 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ParReachabilityTest;
+
+global protocol ParReachabilityTest(role A, role B, role C, role D) {
+
+  par {
+    X() from A to B;
+    Z() from A to D;
+  } and {
+    Z1() from A to C;
+  }
+
+}

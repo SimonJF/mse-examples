@@ -1,0 +1,8 @@
+module src.com.simonjf.ScribbleExamples.ReachabilityTest.ParReachabilityTest_C;
+
+local protocol ParReachabilityTest at C(role A,role B,role C,role D) {
+	par {
+	} and {
+		Z1() from A;
+	}
+}
