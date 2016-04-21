@@ -1,0 +1,9 @@
+module src.com.simonjf.ScribbleExamples.DeadlockExamples.DeadlockExamples;
+
+global protocol M(role A, role B) {
+  X() from A to B;
+}
+
+global protocol N(role C, role D) {
+  Y() from C to D;
+}

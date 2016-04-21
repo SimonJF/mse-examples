@@ -1,0 +1,5 @@
+module src.com.simonjf.ScribbleExamples.DeadlockExamples.DeadlockExamples_D;
+
+local protocol N at D(role C,role D) {
+	Y() from C;
+}
